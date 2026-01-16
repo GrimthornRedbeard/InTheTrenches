@@ -1,0 +1,20 @@
+# Roblox Studio files (keep .rbxl in a separate backup, not git)
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log
