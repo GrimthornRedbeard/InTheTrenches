@@ -2,6 +2,7 @@
 library;
 
 export 'enemy.dart';
+export 'enemy_instance.dart';
 export 'era.dart';
 export 'game_state.dart';
 export 'placed_tower.dart';
