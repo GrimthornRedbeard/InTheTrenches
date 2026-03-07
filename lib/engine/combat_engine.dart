@@ -144,11 +144,13 @@ class CombatEngine {
       );
 
       // Record fire event.
-      fireEvents.add(FireEvent(
-        towerId: tower.id,
-        enemyId: target.id,
-        damage: effectiveDamage,
-      ));
+      fireEvents.add(
+        FireEvent(
+          towerId: tower.id,
+          enemyId: target.id,
+          damage: effectiveDamage,
+        ),
+      );
 
       // Award gold on kill.
       if (killed) {

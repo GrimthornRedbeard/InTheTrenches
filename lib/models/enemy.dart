@@ -97,14 +97,14 @@ class EnemyDefinition extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        eraId,
-        hp,
-        speed,
-        armor,
-        reward,
-        ability,
-        description,
-      ];
+    id,
+    name,
+    eraId,
+    hp,
+    speed,
+    armor,
+    reward,
+    ability,
+    description,
+  ];
 }

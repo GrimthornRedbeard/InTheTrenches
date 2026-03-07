@@ -104,10 +104,7 @@ void main() {
           id: 'test',
           name: 'Test',
           eraId: 'test',
-          path: [
-            PathPoint(x: 0, y: 0),
-            PathPoint(x: 3, y: 4),
-          ],
+          path: [PathPoint(x: 0, y: 0), PathPoint(x: 3, y: 4)],
           placements: [],
           waveCount: 1,
         );
@@ -145,8 +142,7 @@ void main() {
           placements: [],
           waveCount: 1,
         );
-        expect(
-            map.positionAtProgress(1.0), const PathPoint(x: 100, y: 100));
+        expect(map.positionAtProgress(1.0), const PathPoint(x: 100, y: 100));
       });
 
       test('progress 0.5 returns midpoint for a 2-point path', () {
@@ -154,10 +150,7 @@ void main() {
           id: 'test',
           name: 'Test',
           eraId: 'test',
-          path: [
-            PathPoint(x: 0, y: 0),
-            PathPoint(x: 100, y: 0),
-          ],
+          path: [PathPoint(x: 0, y: 0), PathPoint(x: 100, y: 0)],
           placements: [],
           waveCount: 1,
         );
@@ -171,10 +164,7 @@ void main() {
           id: 'test',
           name: 'Test',
           eraId: 'test',
-          path: [
-            PathPoint(x: 10, y: 20),
-            PathPoint(x: 100, y: 200),
-          ],
+          path: [PathPoint(x: 10, y: 20), PathPoint(x: 100, y: 200)],
           placements: [],
           waveCount: 1,
         );
@@ -186,15 +176,11 @@ void main() {
           id: 'test',
           name: 'Test',
           eraId: 'test',
-          path: [
-            PathPoint(x: 10, y: 20),
-            PathPoint(x: 100, y: 200),
-          ],
+          path: [PathPoint(x: 10, y: 20), PathPoint(x: 100, y: 200)],
           placements: [],
           waveCount: 1,
         );
-        expect(
-            map.positionAtProgress(1.5), const PathPoint(x: 100, y: 200));
+        expect(map.positionAtProgress(1.5), const PathPoint(x: 100, y: 200));
       });
 
       test('empty path returns (0, 0)', () {
@@ -311,23 +297,32 @@ void main() {
 
     test('each map has at least 2 path points', () {
       for (final map in MapData.allMaps) {
-        expect(map.path.length, greaterThanOrEqualTo(2),
-            reason: '${map.id} should have at least 2 path points');
+        expect(
+          map.path.length,
+          greaterThanOrEqualTo(2),
+          reason: '${map.id} should have at least 2 path points',
+        );
       }
     });
 
     test('each map has at least 4 placement positions', () {
       for (final map in MapData.allMaps) {
-        expect(map.placements.length, greaterThanOrEqualTo(4),
-            reason: '${map.id} should have at least 4 placement positions');
+        expect(
+          map.placements.length,
+          greaterThanOrEqualTo(4),
+          reason: '${map.id} should have at least 4 placement positions',
+        );
       }
     });
 
     test('each placement position has a unique ID within its map', () {
       for (final map in MapData.allMaps) {
         final ids = map.placements.map((p) => p.id).toSet();
-        expect(ids.length, map.placements.length,
-            reason: '${map.id} should have unique placement IDs');
+        expect(
+          ids.length,
+          map.placements.length,
+          reason: '${map.id} should have unique placement IDs',
+        );
       }
     });
   });

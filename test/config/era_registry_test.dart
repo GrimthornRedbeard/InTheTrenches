@@ -14,29 +14,46 @@ void main() {
 
     test('each tower has valid stats (positive cost, range, damage)', () {
       for (final tower in EraRegistry.wwi.towers) {
-        expect(tower.cost, greaterThan(0),
-            reason: '${tower.name} should have positive cost');
-        expect(tower.range, greaterThan(0),
-            reason: '${tower.name} should have positive range');
-        expect(tower.damage, greaterThan(0),
-            reason: '${tower.name} should have positive damage');
+        expect(
+          tower.cost,
+          greaterThan(0),
+          reason: '${tower.name} should have positive cost',
+        );
+        expect(
+          tower.range,
+          greaterThan(0),
+          reason: '${tower.name} should have positive range',
+        );
+        expect(
+          tower.damage,
+          greaterThan(0),
+          reason: '${tower.name} should have positive damage',
+        );
       }
     });
 
     test('each enemy has valid stats (positive hp, speed, reward)', () {
       for (final enemy in EraRegistry.wwi.enemies) {
-        expect(enemy.hp, greaterThan(0),
-            reason: '${enemy.name} should have positive hp');
-        expect(enemy.speed, greaterThan(0),
-            reason: '${enemy.name} should have positive speed');
-        expect(enemy.reward, greaterThan(0),
-            reason: '${enemy.name} should have positive reward');
+        expect(
+          enemy.hp,
+          greaterThan(0),
+          reason: '${enemy.name} should have positive hp',
+        );
+        expect(
+          enemy.speed,
+          greaterThan(0),
+          reason: '${enemy.name} should have positive speed',
+        );
+        expect(
+          enemy.reward,
+          greaterThan(0),
+          reason: '${enemy.name} should have positive reward',
+        );
       }
     });
 
     test('contains one tower of each category', () {
-      final categories =
-          EraRegistry.wwi.towers.map((t) => t.category).toSet();
+      final categories = EraRegistry.wwi.towers.map((t) => t.category).toSet();
       expect(categories, contains(TowerCategory.damage));
       expect(categories, contains(TowerCategory.area));
       expect(categories, contains(TowerCategory.slow));
@@ -44,15 +61,21 @@ void main() {
 
     test('all towers belong to wwi era', () {
       for (final tower in EraRegistry.wwi.towers) {
-        expect(tower.eraId, 'wwi',
-            reason: '${tower.name} should belong to wwi era');
+        expect(
+          tower.eraId,
+          'wwi',
+          reason: '${tower.name} should belong to wwi era',
+        );
       }
     });
 
     test('all enemies belong to wwi era', () {
       for (final enemy in EraRegistry.wwi.enemies) {
-        expect(enemy.eraId, 'wwi',
-            reason: '${enemy.name} should belong to wwi era');
+        expect(
+          enemy.eraId,
+          'wwi',
+          reason: '${enemy.name} should belong to wwi era',
+        );
       }
     });
 
@@ -78,29 +101,48 @@ void main() {
 
     test('each tower has valid stats (positive cost, range, damage)', () {
       for (final tower in EraRegistry.medieval.towers) {
-        expect(tower.cost, greaterThan(0),
-            reason: '${tower.name} should have positive cost');
-        expect(tower.range, greaterThan(0),
-            reason: '${tower.name} should have positive range');
-        expect(tower.damage, greaterThan(0),
-            reason: '${tower.name} should have positive damage');
+        expect(
+          tower.cost,
+          greaterThan(0),
+          reason: '${tower.name} should have positive cost',
+        );
+        expect(
+          tower.range,
+          greaterThan(0),
+          reason: '${tower.name} should have positive range',
+        );
+        expect(
+          tower.damage,
+          greaterThan(0),
+          reason: '${tower.name} should have positive damage',
+        );
       }
     });
 
     test('each enemy has valid stats (positive hp, speed, reward)', () {
       for (final enemy in EraRegistry.medieval.enemies) {
-        expect(enemy.hp, greaterThan(0),
-            reason: '${enemy.name} should have positive hp');
-        expect(enemy.speed, greaterThan(0),
-            reason: '${enemy.name} should have positive speed');
-        expect(enemy.reward, greaterThan(0),
-            reason: '${enemy.name} should have positive reward');
+        expect(
+          enemy.hp,
+          greaterThan(0),
+          reason: '${enemy.name} should have positive hp',
+        );
+        expect(
+          enemy.speed,
+          greaterThan(0),
+          reason: '${enemy.name} should have positive speed',
+        );
+        expect(
+          enemy.reward,
+          greaterThan(0),
+          reason: '${enemy.name} should have positive reward',
+        );
       }
     });
 
     test('contains one tower of each category', () {
-      final categories =
-          EraRegistry.medieval.towers.map((t) => t.category).toSet();
+      final categories = EraRegistry.medieval.towers
+          .map((t) => t.category)
+          .toSet();
       expect(categories, contains(TowerCategory.damage));
       expect(categories, contains(TowerCategory.area));
       expect(categories, contains(TowerCategory.slow));
@@ -108,15 +150,21 @@ void main() {
 
     test('all towers belong to medieval era', () {
       for (final tower in EraRegistry.medieval.towers) {
-        expect(tower.eraId, 'medieval',
-            reason: '${tower.name} should belong to medieval era');
+        expect(
+          tower.eraId,
+          'medieval',
+          reason: '${tower.name} should belong to medieval era',
+        );
       }
     });
 
     test('all enemies belong to medieval era', () {
       for (final enemy in EraRegistry.medieval.enemies) {
-        expect(enemy.eraId, 'medieval',
-            reason: '${enemy.name} should belong to medieval era');
+        expect(
+          enemy.eraId,
+          'medieval',
+          reason: '${enemy.name} should belong to medieval era',
+        );
       }
     });
 
@@ -134,7 +182,10 @@ void main() {
   group('EraRegistry - Registry Access', () {
     test('allEras contains both eras', () {
       expect(EraRegistry.allEras.length, 2);
-      expect(EraRegistry.allEras.map((e) => e.id), containsAll(['wwi', 'medieval']));
+      expect(
+        EraRegistry.allEras.map((e) => e.id),
+        containsAll(['wwi', 'medieval']),
+      );
     });
 
     test('getEra returns correct era by ID', () {

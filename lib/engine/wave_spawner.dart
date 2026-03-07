@@ -49,10 +49,7 @@ class WaveSpawner {
   /// immediately (without waiting for a delay).
   bool _needsImmediateSpawn = false;
 
-  WaveSpawner({
-    required this.wave,
-    required this.enemyLookup,
-  });
+  WaveSpawner({required this.wave, required this.enemyLookup});
 
   /// The current state of the wave.
   WaveState get state {
@@ -160,9 +157,7 @@ class WaveSpawner {
   EnemyInstance _spawnEnemy(WaveGroup group) {
     final definition = enemyLookup[group.enemyId];
     if (definition == null) {
-      throw StateError(
-        'Enemy definition not found for id: ${group.enemyId}',
-      );
+      throw StateError('Enemy definition not found for id: ${group.enemyId}');
     }
 
     final id = 'enemy_$_globalSpawnCounter';

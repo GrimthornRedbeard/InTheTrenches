@@ -86,6 +86,13 @@ class GameState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [gold, lives, currentWave, eraId, mapId, phase, towers];
+  List<Object?> get props => [
+    gold,
+    lives,
+    currentWave,
+    eraId,
+    mapId,
+    phase,
+    towers,
+  ];
 }

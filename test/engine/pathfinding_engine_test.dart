@@ -11,10 +11,7 @@ void main() {
     id: 'test_map',
     name: 'Test Map',
     eraId: 'test',
-    path: [
-      PathPoint(x: 0, y: 0),
-      PathPoint(x: 100, y: 0),
-    ],
+    path: [PathPoint(x: 0, y: 0), PathPoint(x: 100, y: 0)],
     placements: [],
     waveCount: 1,
   );
@@ -144,12 +141,7 @@ void main() {
   group('PathfindingEngine — dead enemies', () {
     test('dead enemies do not move', () {
       final enemies = [
-        makeEnemy(
-          id: 'dead_one',
-          speed: 10.0,
-          pathProgress: 0.3,
-          alive: false,
-        ),
+        makeEnemy(id: 'dead_one', speed: 10.0, pathProgress: 0.3, alive: false),
       ];
       final result = engine.tick(1.0, enemies, testMap);
 
@@ -162,15 +154,16 @@ void main() {
     test('mix of alive and dead enemies — only alive ones move', () {
       final enemies = [
         makeEnemy(id: 'alive_one', speed: 10.0, pathProgress: 0.0, alive: true),
-        makeEnemy(
-            id: 'dead_one', speed: 10.0, pathProgress: 0.5, alive: false),
+        makeEnemy(id: 'dead_one', speed: 10.0, pathProgress: 0.5, alive: false),
       ];
       final result = engine.tick(1.0, enemies, testMap);
 
-      final aliveOne =
-          result.updatedEnemies.firstWhere((e) => e.id == 'alive_one');
-      final deadOne =
-          result.updatedEnemies.firstWhere((e) => e.id == 'dead_one');
+      final aliveOne = result.updatedEnemies.firstWhere(
+        (e) => e.id == 'alive_one',
+      );
+      final deadOne = result.updatedEnemies.firstWhere(
+        (e) => e.id == 'dead_one',
+      );
 
       expect(aliveOne.pathProgress, closeTo(0.1, 1e-10));
       expect(deadOne.pathProgress, closeTo(0.5, 1e-10));

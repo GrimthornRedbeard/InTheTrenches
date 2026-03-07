@@ -51,10 +51,7 @@ class PathfindingEngine {
 
       if (newProgress >= 1.0) {
         // Enemy reached the base.
-        final reachedEnemy = enemy.copyWith(
-          pathProgress: 1.0,
-          alive: false,
-        );
+        final reachedEnemy = enemy.copyWith(pathProgress: 1.0, alive: false);
         updated.add(reachedEnemy);
         reached.add(reachedEnemy);
       } else {

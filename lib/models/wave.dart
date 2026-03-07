@@ -17,11 +17,7 @@ class Wave extends Equatable {
     required this.bonusReward,
   });
 
-  Wave copyWith({
-    int? number,
-    List<WaveGroup>? groups,
-    int? bonusReward,
-  }) {
+  Wave copyWith({int? number, List<WaveGroup>? groups, int? bonusReward}) {
     return Wave(
       number: number ?? this.number,
       groups: groups ?? this.groups,
