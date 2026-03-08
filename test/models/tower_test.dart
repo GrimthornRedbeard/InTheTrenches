@@ -51,9 +51,7 @@ void main() {
     });
 
     test('upgrade path: tier 1 tower has upgradesTo', () {
-      final tier1 = tower.copyWith(
-        upgradesTo: ['tier2a', 'tier2b'],
-      );
+      final tier1 = tower.copyWith(upgradesTo: ['tier2a', 'tier2b']);
       expect(tier1.upgradesTo, ['tier2a', 'tier2b']);
       expect(tier1.upgradesTo.length, 2);
     });
@@ -95,18 +93,24 @@ void main() {
 
   group('TowerCategory', () {
     test('enum serialization round-trip for damage', () {
-      expect(TowerCategory.fromJson(TowerCategory.damage.toJson()),
-          TowerCategory.damage);
+      expect(
+        TowerCategory.fromJson(TowerCategory.damage.toJson()),
+        TowerCategory.damage,
+      );
     });
 
     test('enum serialization round-trip for area', () {
-      expect(TowerCategory.fromJson(TowerCategory.area.toJson()),
-          TowerCategory.area);
+      expect(
+        TowerCategory.fromJson(TowerCategory.area.toJson()),
+        TowerCategory.area,
+      );
     });
 
     test('enum serialization round-trip for slow', () {
-      expect(TowerCategory.fromJson(TowerCategory.slow.toJson()),
-          TowerCategory.slow);
+      expect(
+        TowerCategory.fromJson(TowerCategory.slow.toJson()),
+        TowerCategory.slow,
+      );
     });
 
     test('toJson returns enum name string', () {

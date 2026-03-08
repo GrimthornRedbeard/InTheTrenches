@@ -46,16 +46,15 @@ class EnemyInstance extends Equatable {
   factory EnemyInstance.fromDefinition({
     required String id,
     required EnemyDefinition definition,
-  }) =>
-      EnemyInstance(
-        id: id,
-        definitionId: definition.id,
-        currentHp: definition.hp,
-        speed: definition.speed,
-        armor: definition.armor,
-        pathProgress: 0.0,
-        alive: true,
-      );
+  }) => EnemyInstance(
+    id: id,
+    definitionId: definition.id,
+    currentHp: definition.hp,
+    speed: definition.speed,
+    armor: definition.armor,
+    pathProgress: 0.0,
+    alive: true,
+  );
 
   EnemyInstance copyWith({
     String? id,
@@ -79,12 +78,12 @@ class EnemyInstance extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        definitionId,
-        currentHp,
-        speed,
-        armor,
-        pathProgress,
-        alive,
-      ];
+    id,
+    definitionId,
+    currentHp,
+    speed,
+    armor,
+    pathProgress,
+    alive,
+  ];
 }

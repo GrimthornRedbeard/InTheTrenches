@@ -104,7 +104,8 @@ class TowerDefinition extends Equatable {
       attackSpeed: (json['attackSpeed'] as num).toDouble(),
       description: json['description'] as String,
       upgradesFromId: json['upgradesFromId'] as String?,
-      upgradesTo: (json['upgradesTo'] as List<dynamic>?)
+      upgradesTo:
+          (json['upgradesTo'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
@@ -114,17 +115,17 @@ class TowerDefinition extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        eraId,
-        tier,
-        cost,
-        range,
-        damage,
-        attackSpeed,
-        description,
-        upgradesFromId,
-        upgradesTo,
-        category,
-      ];
+    id,
+    name,
+    eraId,
+    tier,
+    cost,
+    range,
+    damage,
+    attackSpeed,
+    description,
+    upgradesFromId,
+    upgradesTo,
+    category,
+  ];
 }

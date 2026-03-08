@@ -7,6 +7,7 @@ export 'era.dart';
 export 'game_map.dart';
 export 'game_state.dart';
 export 'placed_tower.dart';
+export 'status_effect.dart';
 export 'tower.dart';
 export 'wave.dart';
 export 'wave_group.dart';

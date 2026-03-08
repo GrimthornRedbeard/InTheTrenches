@@ -14,11 +14,7 @@ class WaveGroup extends Equatable {
     required this.delayBetween,
   });
 
-  WaveGroup copyWith({
-    String? enemyId,
-    int? count,
-    double? delayBetween,
-  }) {
+  WaveGroup copyWith({String? enemyId, int? count, double? delayBetween}) {
     return WaveGroup(
       enemyId: enemyId ?? this.enemyId,
       count: count ?? this.count,
@@ -27,11 +23,7 @@ class WaveGroup extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'enemyId': enemyId,
-      'count': count,
-      'delayBetween': delayBetween,
-    };
+    return {'enemyId': enemyId, 'count': count, 'delayBetween': delayBetween};
   }
 
   factory WaveGroup.fromJson(Map<String, dynamic> json) {

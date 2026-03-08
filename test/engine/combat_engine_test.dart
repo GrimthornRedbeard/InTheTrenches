@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trench_defense/engine/combat_engine.dart';
+import 'package:trench_defense/engine/targeting_engine.dart';
 import 'package:trench_defense/models/models.dart';
 
 void main() {
@@ -12,10 +13,7 @@ void main() {
     id: 'test_map',
     name: 'Test Map',
     eraId: 'test',
-    path: [
-      PathPoint(x: 0, y: 0),
-      PathPoint(x: 100, y: 0),
-    ],
+    path: [PathPoint(x: 0, y: 0), PathPoint(x: 100, y: 0)],
     placements: [],
     waveCount: 1,
   );
@@ -56,10 +54,7 @@ void main() {
   };
 
   // Enemy rewards lookup
-  final enemyRewards = <String, int>{
-    'test_infantry': 10,
-    'test_heavy': 35,
-  };
+  final enemyRewards = <String, int>{'test_infantry': 10, 'test_heavy': 35};
 
   // ---------------------------------------------------------------------------
   // Helpers
@@ -398,10 +393,12 @@ void main() {
       expect(result.fireEvents, hasLength(2));
       // Tower A should fire at enemy_a (only one in range),
       // tower B at enemy_b (only one in range)
-      final eventA =
-          result.fireEvents.firstWhere((e) => e.towerId == 'tower_a');
-      final eventB =
-          result.fireEvents.firstWhere((e) => e.towerId == 'tower_b');
+      final eventA = result.fireEvents.firstWhere(
+        (e) => e.towerId == 'tower_a',
+      );
+      final eventB = result.fireEvents.firstWhere(
+        (e) => e.towerId == 'tower_b',
+      );
       expect(eventA.enemyId, 'enemy_a');
       expect(eventB.enemyId, 'enemy_b');
     });
@@ -410,10 +407,7 @@ void main() {
       // Both towers at (50,0), enemy at progress 0.5 => (50,0)
       // Each does 25 damage, starting from 100 hp => 50 hp left
       final enemies = [makeEnemy(currentHp: 100.0, pathProgress: 0.5)];
-      final towers = [
-        makeTower(id: 'tower_a'),
-        makeTower(id: 'tower_b'),
-      ];
+      final towers = [makeTower(id: 'tower_a'), makeTower(id: 'tower_b')];
 
       final result = engine.tick(
         deltaTime: 1.0,
@@ -432,10 +426,7 @@ void main() {
       // Enemy has 30 hp. Tower A does 25 damage => 5 hp left.
       // Tower B should see 5 hp, fire, do 25 damage => dead.
       final enemies = [makeEnemy(currentHp: 30.0, pathProgress: 0.5)];
-      final towers = [
-        makeTower(id: 'tower_a'),
-        makeTower(id: 'tower_b'),
-      ];
+      final towers = [makeTower(id: 'tower_a'), makeTower(id: 'tower_b')];
 
       final result = engine.tick(
         deltaTime: 1.0,
@@ -455,8 +446,7 @@ void main() {
   });
 
   group('CombatEngine — target priority: first', () {
-    test('"first" priority targets highest pathProgress (closest to base)',
-        () {
+    test('"first" priority targets highest pathProgress (closest to base)', () {
       // Tower at (50, 0) with range 60
       // Enemy A at progress 0.3 => world pos (30,0), distance = 20 (in range)
       // Enemy B at progress 0.7 => world pos (70,0), distance = 20 (in range)
@@ -474,7 +464,7 @@ void main() {
         map: testMap,
         towerLookup: towerLookup,
         enemyRewards: enemyRewards,
-        priority: TargetPriority.first,
+        mode: TargetingMode.first,
       );
 
       expect(result.fireEvents, hasLength(1));
