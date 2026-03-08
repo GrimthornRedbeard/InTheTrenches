@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trench_defense/engine/combat_engine.dart';
+import 'package:trench_defense/engine/targeting_engine.dart';
 import 'package:trench_defense/models/models.dart';
 
 void main() {
@@ -463,7 +464,7 @@ void main() {
         map: testMap,
         towerLookup: towerLookup,
         enemyRewards: enemyRewards,
-        priority: TargetPriority.first,
+        mode: TargetingMode.first,
       );
 
       expect(result.fireEvents, hasLength(1));

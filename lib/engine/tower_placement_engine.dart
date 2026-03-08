@@ -104,7 +104,12 @@ class TowerPlacementEngine {
   // upgradeTower (Tier 1 → Tier 2, auto-selects first branch)
   // ---------------------------------------------------------------------------
 
-  /// Upgrades [towerId] to its first Tier-2 branch.
+  /// Advances [towerId] to the next tier using the first [upgradesTo] option.
+  ///
+  /// This is a convenience method that automatically picks the first available
+  /// upgrade branch without validating the current tier. Use [chooseBranch]
+  /// for explicit Tier-1 → Tier-2 branching, and [upgradeTier3] for
+  /// enforced Tier-2 → Tier-3 progression.
   ///
   /// Returns the updated [PlacedTower], or `null` if the tower is not found,
   /// has no upgrade options, or the player cannot afford the upgrade.

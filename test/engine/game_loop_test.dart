@@ -12,7 +12,6 @@ void main() {
     double pathProgress = 0.5,
     bool alive = true,
     double currentHp = 50.0,
-    int damage = 10,
   }) {
     return EnemyInstance(
       id: id,

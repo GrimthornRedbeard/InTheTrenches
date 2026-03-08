@@ -16,8 +16,8 @@ void main() {
       expect(Scoring.calculateStars(baseHpStart: 100, baseHpEnd: 51), 2);
     });
 
-    test('2 stars when base HP is exactly 50% + 1', () {
-      expect(Scoring.calculateStars(baseHpStart: 100, baseHpEnd: 51), 2);
+    test('2 stars when base HP is 52 (well above the 50% boundary)', () {
+      expect(Scoring.calculateStars(baseHpStart: 100, baseHpEnd: 52), 2);
     });
 
     test('1 star when base HP between 1 and 50% (inclusive of 50)', () {

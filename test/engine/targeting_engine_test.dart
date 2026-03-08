@@ -269,6 +269,7 @@ void main() {
         timeSinceLastShot: timeSinceLastShot,
         fireRate: fireRate,
         fired: true,
+        deltaTime: 0.0,
       );
       // Subtract the interval (0.5) from 0.7 => 0.2 remainder
       expect(next, closeTo(0.2, 1e-10));

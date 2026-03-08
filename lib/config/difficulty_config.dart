@@ -1,4 +1,6 @@
+import '../engine/scoring.dart';
 import '../models/enemy.dart';
+import 'game_constants.dart';
 
 /// Difficulty modifiers that scale enemy stats and starting resources.
 ///
@@ -24,12 +26,32 @@ class DifficultyConfig {
   });
 
   // ---------------------------------------------------------------------------
-  // Named constructors
+  // Factory from Difficulty enum (single source of truth)
+  // ---------------------------------------------------------------------------
+
+  /// Creates a [DifficultyConfig] corresponding to [difficulty].
+  ///
+  /// Use this factory to ensure the selected [Difficulty] and its gameplay
+  /// multipliers are always in sync — a caller cannot accidentally mix
+  /// [Difficulty.hard] scoring with [DifficultyConfig.normal] gameplay.
+  factory DifficultyConfig.fromDifficulty(Difficulty difficulty) {
+    switch (difficulty) {
+      case Difficulty.normal:
+        return DifficultyConfig.normal();
+      case Difficulty.hard:
+        return DifficultyConfig.hard();
+      case Difficulty.nightmare:
+        return DifficultyConfig.nightmare();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Named constructors (values sourced from GameConstants)
   // ---------------------------------------------------------------------------
 
   /// Normal difficulty: 1× everything.
   factory DifficultyConfig.normal() => const DifficultyConfig(
-    hpMultiplier: 1.0,
+    hpMultiplier: GameConstants.normalHpMultiplier,
     enemyCountMultiplier: 1.0,
     speedMultiplier: 1.0,
     startingResourceMultiplier: 1.0,
@@ -37,7 +59,7 @@ class DifficultyConfig {
 
   /// Hard difficulty: 1.5× HP, 1.25× count, 80% starting gold.
   factory DifficultyConfig.hard() => const DifficultyConfig(
-    hpMultiplier: 1.5,
+    hpMultiplier: GameConstants.hardHpMultiplier,
     enemyCountMultiplier: 1.25,
     speedMultiplier: 1.0,
     startingResourceMultiplier: 0.8,
@@ -45,7 +67,7 @@ class DifficultyConfig {
 
   /// Nightmare difficulty: 2× HP, 1.5× count, 60% starting gold.
   factory DifficultyConfig.nightmare() => const DifficultyConfig(
-    hpMultiplier: 2.0,
+    hpMultiplier: GameConstants.nightmareHpMultiplier,
     enemyCountMultiplier: 1.5,
     speedMultiplier: 1.0,
     startingResourceMultiplier: 0.6,

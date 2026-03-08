@@ -37,15 +37,15 @@ class StatusEffect extends Equatable {
   final double tickInterval;
 
   /// Accumulated time since the last DoT tick.
-  final double _timeSinceTick;
+  final double timeSinceTick;
 
   const StatusEffect({
     required this.type,
     required this.magnitude,
     required this.duration,
     required this.tickInterval,
-    double timeSinceTick = 0.0,
-  }) : _timeSinceTick = timeSinceTick;
+    this.timeSinceTick = 0.0,
+  });
 
   StatusEffect copyWith({
     StatusEffectType? type,
@@ -59,7 +59,7 @@ class StatusEffect extends Equatable {
       magnitude: magnitude ?? this.magnitude,
       duration: duration ?? this.duration,
       tickInterval: tickInterval ?? this.tickInterval,
-      timeSinceTick: timeSinceTick ?? _timeSinceTick,
+      timeSinceTick: timeSinceTick ?? this.timeSinceTick,
     );
   }
 
@@ -69,7 +69,7 @@ class StatusEffect extends Equatable {
     magnitude,
     duration,
     tickInterval,
-    _timeSinceTick,
+    timeSinceTick,
   ];
 }
 
@@ -101,17 +101,39 @@ class StatusEffectManager {
   // Effect merging (prevent duplicate stacking)
   // ---------------------------------------------------------------------------
 
-  /// Merges [incoming] effects with [existing] ones, preventing duplicate stacking.
+  /// Merges a combined list of effects, preventing duplicate stacking by type.
   ///
-  /// For each type, keeps the one with the longer remaining duration.
-  /// Distinct types are additive (e.g., slow + DoT both apply).
+  /// For each [StatusEffectType.slow], keeps the effect with the highest
+  /// magnitude (strongest slow wins), using the maximum remaining duration
+  /// across all slows. For all other types, keeps the one with the longer
+  /// remaining duration. Distinct types are additive (e.g., slow + DoT both apply).
   static List<StatusEffect> mergeEffects(List<StatusEffect> effects) {
-    // Group by type and keep the one with the highest duration.
     final Map<StatusEffectType, StatusEffect> merged = {};
     for (final effect in effects) {
       final existing = merged[effect.type];
-      if (existing == null || effect.duration > existing.duration) {
+      if (existing == null) {
         merged[effect.type] = effect;
+        continue;
+      }
+
+      if (effect.type == StatusEffectType.slow) {
+        // For slows: keep the strongest magnitude, take the max duration.
+        final maxDuration = math.max(effect.duration, existing.duration);
+        if (effect.magnitude > existing.magnitude) {
+          merged[effect.type] = effect.copyWith(duration: maxDuration);
+        } else if (effect.magnitude < existing.magnitude) {
+          merged[effect.type] = existing.copyWith(duration: maxDuration);
+        } else {
+          // Equal magnitude — keep the one with the longer duration.
+          merged[effect.type] = effect.duration > existing.duration
+              ? effect
+              : existing;
+        }
+      } else {
+        // For non-slow types: keep the one with the longer remaining duration.
+        if (effect.duration > existing.duration) {
+          merged[effect.type] = effect;
+        }
       }
     }
     return merged.values.toList();
@@ -123,6 +145,10 @@ class StatusEffectManager {
 
   /// Advances all [effects] by [deltaTime] seconds and returns the surviving ones.
   ///
+  /// For DoT effects, [timeSinceTick] is accumulated so that
+  /// [calculateDotDamage] fires correctly even when [deltaTime] is smaller
+  /// than [tickInterval] (e.g., at 60 fps with a 1-second tick interval).
+  ///
   /// Effects with `duration <= 0` after the tick are removed.
   static List<StatusEffect> tickEffects(
     List<StatusEffect> effects, {
@@ -132,7 +158,19 @@ class StatusEffectManager {
     for (final effect in effects) {
       final newDuration = effect.duration - deltaTime;
       if (newDuration <= 0) continue; // expired
-      result.add(effect.copyWith(duration: newDuration));
+
+      if (effect.type == StatusEffectType.dot && effect.tickInterval > 0) {
+        // Accumulate time for DoT effects so sub-frame ticks are not discarded.
+        final newTimeSinceTick = effect.timeSinceTick + deltaTime;
+        // Reset the accumulator modulo tickInterval so we don't double-count.
+        final ticks = (newTimeSinceTick / effect.tickInterval).floor();
+        final remainder = newTimeSinceTick - ticks * effect.tickInterval;
+        result.add(
+          effect.copyWith(duration: newDuration, timeSinceTick: remainder),
+        );
+      } else {
+        result.add(effect.copyWith(duration: newDuration));
+      }
     }
     return result;
   }
@@ -141,9 +179,11 @@ class StatusEffectManager {
   // DoT damage calculation
   // ---------------------------------------------------------------------------
 
-  /// Calculates the total DoT damage for [effect] over [deltaTime] seconds.
+  /// Calculates the total DoT damage for [effect] over [deltaTime] seconds,
+  /// accounting for any time already accumulated in [effect.timeSinceTick].
   ///
-  /// Returns 0.0 if [effect] is not a DoT or fewer than one tick has elapsed.
+  /// Returns 0.0 if [effect] is not a DoT or fewer than one tick has elapsed
+  /// (including accumulated time from previous frames).
   static double calculateDotDamage({
     required StatusEffect effect,
     required double deltaTime,
@@ -151,7 +191,9 @@ class StatusEffectManager {
     if (effect.type != StatusEffectType.dot) return 0.0;
     if (effect.tickInterval <= 0) return 0.0;
 
-    final ticks = (deltaTime / effect.tickInterval).floor();
+    // Include already-accumulated time so partial frames fire correctly.
+    final totalTime = effect.timeSinceTick + deltaTime;
+    final ticks = (totalTime / effect.tickInterval).floor();
     return ticks * effect.magnitude;
   }
 }

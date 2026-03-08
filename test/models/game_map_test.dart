@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trench_defense/config/map_data.dart';
 import 'package:trench_defense/models/models.dart';

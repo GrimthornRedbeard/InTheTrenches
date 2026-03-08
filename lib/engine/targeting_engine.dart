@@ -110,13 +110,16 @@ class TargetingEngine {
   /// Computes the new `timeSinceLastShot` value.
   ///
   /// If [fired] is `true`, subtracts one fire interval from [timeSinceLastShot]
-  /// (preserving any remainder for the next tick).
+  /// (preserving any remainder for the next tick). [deltaTime] is not used
+  /// in this branch.
   /// If [fired] is `false`, adds [deltaTime] to [timeSinceLastShot].
+  /// [deltaTime] is required because omitting it when `fired=false` would
+  /// silently freeze the timer.
   static double nextTimeSinceLastShot({
     required double timeSinceLastShot,
     required double fireRate,
     required bool fired,
-    double deltaTime = 0.0,
+    required double deltaTime,
   }) {
     if (fired) {
       // Subtract the interval to preserve the remainder for the next shot.
