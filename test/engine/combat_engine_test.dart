@@ -1,3 +1,4 @@
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trench_defense/engine/combat_engine.dart';
 import 'package:trench_defense/engine/targeting_engine.dart';
@@ -59,6 +60,8 @@ void main() {
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
+  /// Helper: create an enemy at a world position equivalent to the old
+  /// pathProgress value on a 0→100 horizontal path (x = progress * 100, y = 0).
   EnemyInstance makeEnemy({
     String id = 'enemy_0',
     String definitionId = 'test_infantry',
@@ -74,8 +77,8 @@ void main() {
       currentHp: currentHp,
       speed: speed,
       armor: armor,
-      pathProgress: pathProgress,
       alive: alive,
+      position: Offset(pathProgress * 100, 0),
     );
   }
 

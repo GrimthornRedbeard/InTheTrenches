@@ -9,7 +9,6 @@ import '../config/game_constants.dart';
 import '../config/map_data.dart';
 import '../engine/combat_engine.dart';
 import '../engine/game_loop.dart';
-import '../engine/pathfinding_engine.dart';
 import '../engine/resource_manager.dart';
 import '../engine/scoring.dart';
 import '../engine/tower_placement_engine.dart';
@@ -54,7 +53,6 @@ class GameController extends ChangeNotifier {
   late final ResourceManager resources;
   late final TowerPlacementEngine placementEngine;
   late final CombatEngine combatEngine;
-  late final PathfindingEngine pathfindingEngine;
 
   // -- State --
   GameState state;
@@ -112,7 +110,6 @@ class GameController extends ChangeNotifier {
       towerLookup: towerLookup,
     );
     combatEngine = CombatEngine();
-    pathfindingEngine = PathfindingEngine();
 
     // Generate waves
     waves = _generateWaves();
@@ -212,19 +209,11 @@ class GameController extends ChangeNotifier {
       enemies = [...enemies, ...spawned];
     }
 
-    // 2. Move enemies along path
-    final pathResult = pathfindingEngine.tick(dt, enemies, gameMap);
-    enemies = pathResult.updatedEnemies;
+    // 2. Move enemies — 2D movement engine (Task 3) will replace this stub.
+    // For now enemies remain at their spawned position until the movement
+    // engine is wired up.
 
-    // 3. Handle enemies reaching base
-    for (final reached in pathResult.reachedBase) {
-      loopState = GameLoop.applyBaseHpDamage(
-        state: loopState,
-        damage: 1,
-      );
-      state = state.copyWith(lives: loopState.baseHp);
-      _waveSpawner?.markEnemyKilled(reached.id);
-    }
+    // 3. Handle enemies reaching base — stub until movement engine is added.
 
     // 4. Combat
     final combatResult = combatEngine.tick(

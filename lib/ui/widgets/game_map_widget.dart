@@ -317,9 +317,9 @@ class _MapPainter extends CustomPainter {
     for (final enemy in controller.enemies) {
       if (!enemy.alive) continue;
 
-      final pos = controller.gameMap.positionAtProgress(enemy.pathProgress);
-      final x = pos.x;
-      final y = pos.y;
+      // Use the enemy's 2D position directly (replaces positionAtProgress).
+      final x = enemy.position.dx;
+      final y = enemy.position.dy;
 
       // Color by enemy type
       final color = _getEnemyColor(enemy.definitionId);
@@ -395,8 +395,8 @@ class _MapPainter extends CustomPainter {
         continue;
       }
 
-      final enemyPos =
-          controller.gameMap.positionAtProgress(enemy.pathProgress);
+      // Use the enemy's 2D position directly (replaces positionAtProgress).
+      final enemyPos = enemy.position;
 
       // Draw fire line
       final linePaint = Paint()
@@ -405,7 +405,7 @@ class _MapPainter extends CustomPainter {
 
       canvas.drawLine(
         Offset(tower.x, tower.y),
-        Offset(enemyPos.x, enemyPos.y),
+        enemyPos,
         linePaint,
       );
     }

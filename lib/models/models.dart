@@ -3,6 +3,7 @@ library;
 
 export 'enemy.dart';
 export 'enemy_instance.dart';
+export 'enemy_state.dart';
 export 'era.dart';
 export 'game_map.dart';
 export 'game_state.dart';

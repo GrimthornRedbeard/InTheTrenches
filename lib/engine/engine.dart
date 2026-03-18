@@ -3,7 +3,6 @@ library;
 
 export 'combat_engine.dart';
 export 'game_loop.dart';
-export 'pathfinding_engine.dart';
 export 'resource_manager.dart';
 export 'scoring.dart';
 export 'targeting_engine.dart';

@@ -1,3 +1,4 @@
+import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trench_defense/engine/targeting_engine.dart';
 import 'package:trench_defense/models/models.dart';
@@ -5,8 +6,9 @@ import 'package:trench_defense/models/models.dart';
 void main() {
   // ---------------------------------------------------------------------------
   // Shared test fixtures
-  // Straight horizontal path: (0,0) → (100,0), totalPathLength = 100
-  // positionAtProgress(p) = (100*p, 0)
+  // Straight horizontal path: (0,0) → (100,0)
+  // Enemy positions are set directly as 2D Offsets (matching old progress math:
+  //   pathProgress p => position (100*p, 0)).
   // ---------------------------------------------------------------------------
 
   const testMap = GameMap(
@@ -18,6 +20,8 @@ void main() {
     waveCount: 1,
   );
 
+  /// Helper: create an enemy at a world position equivalent to the old
+  /// pathProgress value on a 0→100 horizontal path (x = progress * 100, y = 0).
   EnemyInstance makeEnemy({
     required String id,
     required double pathProgress,
@@ -32,8 +36,8 @@ void main() {
       currentHp: currentHp,
       speed: speed,
       armor: armor,
-      pathProgress: pathProgress,
       alive: alive,
+      position: Offset(pathProgress * 100, 0),
     );
   }
 
