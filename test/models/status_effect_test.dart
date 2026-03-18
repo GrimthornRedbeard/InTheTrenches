@@ -81,7 +81,6 @@ void main() {
         currentHp: currentHp,
         speed: speed,
         armor: armor,
-        pathProgress: 0.5,
         alive: true,
       );
     }

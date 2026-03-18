@@ -1,33 +1,22 @@
+// lib/models/enemy_instance.dart
+import 'dart:ui' show Offset;
 import 'package:equatable/equatable.dart';
-
 import 'enemy.dart';
+import 'enemy_state.dart';
 
-/// A spawned, live enemy on the battlefield.
-///
-/// Unlike [EnemyDefinition] which is a blueprint, an [EnemyInstance] represents
-/// an actual enemy that has been spawned into the game world. It tracks mutable
-/// state such as current HP, path progress, and whether the enemy is alive.
 class EnemyInstance extends Equatable {
-  /// Unique identifier for this spawned enemy (e.g., "enemy_0").
   final String id;
-
-  /// Links back to the [EnemyDefinition] this instance was created from.
   final String definitionId;
-
-  /// Current hit points remaining. Starts at the definition's hp value.
   final double currentHp;
-
-  /// Movement speed along the path.
   final double speed;
-
-  /// Damage reduction from armor.
   final double armor;
-
-  /// Progress along the enemy path: 0.0 = start, 1.0 = reached base.
-  final double pathProgress;
-
-  /// Whether this enemy is still alive.
   final bool alive;
+
+  // New 2D movement fields (replaces pathProgress)
+  final Offset position;
+  final Offset velocity;
+  final EnemyMovementState movementState;
+  final int targetSegmentIndex;
 
   const EnemyInstance({
     required this.id,
@@ -35,26 +24,28 @@ class EnemyInstance extends Equatable {
     required this.currentHp,
     required this.speed,
     required this.armor,
-    required this.pathProgress,
     required this.alive,
+    this.position = Offset.zero,
+    this.velocity = Offset.zero,
+    this.movementState = EnemyMovementState.advancing,
+    this.targetSegmentIndex = 0,
   });
 
-  /// Creates an [EnemyInstance] from an [EnemyDefinition], copying its stats.
-  ///
-  /// The instance starts at the beginning of the path (pathProgress = 0.0)
-  /// and is alive.
   factory EnemyInstance.fromDefinition({
     required String id,
     required EnemyDefinition definition,
+    Offset spawnPosition = Offset.zero,
+    int targetSegment = 0,
   }) => EnemyInstance(
-    id: id,
-    definitionId: definition.id,
-    currentHp: definition.hp,
-    speed: definition.speed,
-    armor: definition.armor,
-    pathProgress: 0.0,
-    alive: true,
-  );
+        id: id,
+        definitionId: definition.id,
+        currentHp: definition.hp,
+        speed: definition.speed,
+        armor: definition.armor,
+        alive: true,
+        position: spawnPosition,
+        targetSegmentIndex: targetSegment,
+      );
 
   EnemyInstance copyWith({
     String? id,
@@ -62,28 +53,27 @@ class EnemyInstance extends Equatable {
     double? currentHp,
     double? speed,
     double? armor,
-    double? pathProgress,
     bool? alive,
-  }) {
-    return EnemyInstance(
-      id: id ?? this.id,
-      definitionId: definitionId ?? this.definitionId,
-      currentHp: currentHp ?? this.currentHp,
-      speed: speed ?? this.speed,
-      armor: armor ?? this.armor,
-      pathProgress: pathProgress ?? this.pathProgress,
-      alive: alive ?? this.alive,
-    );
-  }
+    Offset? position,
+    Offset? velocity,
+    EnemyMovementState? movementState,
+    int? targetSegmentIndex,
+  }) => EnemyInstance(
+        id: id ?? this.id,
+        definitionId: definitionId ?? this.definitionId,
+        currentHp: currentHp ?? this.currentHp,
+        speed: speed ?? this.speed,
+        armor: armor ?? this.armor,
+        alive: alive ?? this.alive,
+        position: position ?? this.position,
+        velocity: velocity ?? this.velocity,
+        movementState: movementState ?? this.movementState,
+        targetSegmentIndex: targetSegmentIndex ?? this.targetSegmentIndex,
+      );
 
   @override
   List<Object?> get props => [
-    id,
-    definitionId,
-    currentHp,
-    speed,
-    armor,
-    pathProgress,
-    alive,
-  ];
+        id, definitionId, currentHp, speed, armor, alive,
+        position, velocity, movementState, targetSegmentIndex,
+      ];
 }

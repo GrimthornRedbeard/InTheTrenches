@@ -41,17 +41,25 @@ class TargetingEngine {
 
     switch (mode) {
       case TargetingMode.first:
-        return candidates.reduce(
-          (best, e) => e.pathProgress > best.pathProgress ? e : best,
-        );
+        // "first" = furthest along the path = highest targetSegmentIndex,
+        // then by position magnitude as a tiebreaker.
+        return candidates.reduce((best, e) {
+          if (e.targetSegmentIndex != best.targetSegmentIndex) {
+            return e.targetSegmentIndex > best.targetSegmentIndex ? e : best;
+          }
+          // Same segment: use distance from origin as proxy for progress.
+          final eDist = e.position.distance;
+          final bDist = best.position.distance;
+          return eDist > bDist ? e : best;
+        });
 
       case TargetingMode.nearest:
         EnemyInstance? best;
         double bestDist = double.infinity;
         for (final enemy in candidates) {
-          final pos = map.positionAtProgress(enemy.pathProgress);
-          final dx = tower.x - pos.x;
-          final dy = tower.y - pos.y;
+          final pos = enemy.position;
+          final dx = tower.x - pos.dx;
+          final dy = tower.y - pos.dy;
           final dist = math.sqrt(dx * dx + dy * dy);
           if (dist < bestDist) {
             bestDist = dist;
@@ -81,9 +89,9 @@ class TargetingEngine {
     final result = <EnemyInstance>[];
     for (final enemy in enemies) {
       if (!enemy.alive) continue;
-      final pos = map.positionAtProgress(enemy.pathProgress);
-      final dx = tower.x - pos.x;
-      final dy = tower.y - pos.y;
+      final pos = enemy.position;
+      final dx = tower.x - pos.dx;
+      final dy = tower.y - pos.dy;
       final dist = math.sqrt(dx * dx + dy * dy);
       if (dist <= towerRange) {
         result.add(enemy);

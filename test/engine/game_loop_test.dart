@@ -9,7 +9,6 @@ void main() {
 
   EnemyInstance makeEnemy({
     String id = 'enemy_0',
-    double pathProgress = 0.5,
     bool alive = true,
     double currentHp = 50.0,
   }) {
@@ -19,7 +18,6 @@ void main() {
       currentHp: currentHp,
       speed: 10.0,
       armor: 0.0,
-      pathProgress: pathProgress,
       alive: alive,
     );
   }

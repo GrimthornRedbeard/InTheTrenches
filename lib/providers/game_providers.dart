@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show Offset;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,12 +8,14 @@ import '../config/difficulty_config.dart';
 import '../config/era_registry.dart';
 import '../config/game_constants.dart';
 import '../config/map_data.dart';
+import '../engine/breach_engine.dart';
 import '../engine/combat_engine.dart';
 import '../engine/game_loop.dart';
-import '../engine/pathfinding_engine.dart';
 import '../engine/resource_manager.dart';
 import '../engine/scoring.dart';
+import '../engine/steering_engine.dart';
 import '../engine/tower_placement_engine.dart';
+import '../engine/trench_engine.dart';
 import '../engine/wave_spawner.dart';
 import '../models/models.dart';
 
@@ -54,11 +57,12 @@ class GameController extends ChangeNotifier {
   late final ResourceManager resources;
   late final TowerPlacementEngine placementEngine;
   late final CombatEngine combatEngine;
-  late final PathfindingEngine pathfindingEngine;
+  late final SteeringEngine steeringEngine;
 
   // -- State --
   GameState state;
   List<EnemyInstance> enemies = [];
+  List<TrenchSegment> trenchSegments = [];
   WaveSpawner? _waveSpawner;
   GameLoopState loopState;
   Timer? _timer;
@@ -112,7 +116,10 @@ class GameController extends ChangeNotifier {
       towerLookup: towerLookup,
     );
     combatEngine = CombatEngine();
-    pathfindingEngine = PathfindingEngine();
+    steeringEngine = SteeringEngine();
+
+    // Initialise live trench segment state from the map definition
+    trenchSegments = List<TrenchSegment>.from(gameMap.trenchSegments);
 
     // Generate waves
     waves = _generateWaves();
@@ -179,6 +186,16 @@ class GameController extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  /// Returns the index of the trench segment with the lowest breach HP, using
+  /// the live [trenchSegments] state rather than the immutable map definition.
+  int _currentWeakestSegmentIndex() => gameMap
+      .copyWith(trenchSegments: trenchSegments)
+      .weakestSegmentIndex;
+
+  // ---------------------------------------------------------------------------
   // Game loop
   // ---------------------------------------------------------------------------
 
@@ -206,36 +223,110 @@ class GameController extends ChangeNotifier {
 
     if (state.phase != GamePhase.waveActive) return;
 
-    // 1. Spawn enemies
+    // 1. Spawn enemies — enrich each new enemy with a world position and a
+    //    target segment so the steering engine can guide them.
     if (_waveSpawner != null) {
       final spawned = _waveSpawner!.tick(dt);
-      enemies = [...enemies, ...spawned];
+      if (spawned.isNotEmpty) {
+        final weakIdx = _currentWeakestSegmentIndex();
+        final enriched = spawned.map((e) {
+          final spawnX = gameMap.spawnX(
+            0.1 + 0.8 * (enemies.length % 5) / 5.0,
+          );
+          return e.copyWith(
+            position: Offset(spawnX, gameMap.spawnZoneY),
+            targetSegmentIndex: weakIdx,
+          );
+        }).toList();
+        enemies = [...enemies, ...enriched];
+      }
     }
 
-    // 2. Move enemies along path
-    final pathResult = pathfindingEngine.tick(dt, enemies, gameMap);
-    enemies = pathResult.updatedEnemies;
+    // 2. Steering tick — moves ADVANCING and CROSSED enemies in 2D.
+    //    BREACHING and IN_TRENCH enemies are handled by BreachEngine below.
+    final steeringResult = steeringEngine.tick(dt, enemies, gameMap);
+    enemies = steeringResult.updatedEnemies;
 
-    // 3. Handle enemies reaching base
-    for (final reached in pathResult.reachedBase) {
+    // 3. Handle enemies that reached the command post — deal base HP damage
+    //    and mark them as dead so they are excluded from further processing.
+    for (int i = 0; i < steeringResult.reachedCommandPost.length; i++) {
       loopState = GameLoop.applyBaseHpDamage(
         state: loopState,
         damage: 1,
       );
-      state = state.copyWith(lives: loopState.baseHp);
-      _waveSpawner?.markEnemyKilled(reached.id);
     }
 
-    // 4. Combat
+    // 4. Breach phase — BREACHING enemies drain segment breach HP;
+    //    IN_TRENCH enemies take melee damage and can be killed for gold.
+    final breachResult = BreachEngine.tick(
+      dt: dt,
+      enemies: enemies,
+      segments: trenchSegments,
+      enemyRewards: enemyRewards,
+    );
+    enemies = breachResult.updatedEnemies;
+    trenchSegments = breachResult.updatedSegments;
+
+    // 5. Award gold from breach kills (enemies killed in the trench).
+    if (breachResult.goldAwarded > 0) {
+      resources.earn(breachResult.goldAwarded);
+      state = state.copyWith(gold: resources.gold);
+    }
+
+    // 6. Update segment states (held → contested → breached) based on
+    //    current breach HP values.
+    trenchSegments = TrenchEngine.updateSegmentStates(trenchSegments);
+
+    // 7. Collapse any newly breached segments.
+    trenchSegments = trenchSegments.map((seg) {
+      if (seg.state == TrenchSegmentState.breached) {
+        return TrenchEngine.collapseSegment(seg);
+      }
+      return seg;
+    }).toList();
+
+    // 8. Defeat check — if all trench segments have collapsed, the trench
+    //    line is lost and the player loses immediately.
+    final allCollapsed = trenchSegments
+        .every((s) => s.state == TrenchSegmentState.collapsed);
+    if (allCollapsed && trenchSegments.isNotEmpty) {
+      state = state.copyWith(phase: GamePhase.defeat);
+      _showBanner('DEFEAT');
+      notifyListeners();
+      return;
+    }
+
+    // 9. Ranged combat — towers only fire at ADVANCING enemies (they cannot
+    //    target enemies inside the trench or past it).
+    final advancingEnemies = enemies
+        .where((e) => e.alive && e.movementState == EnemyMovementState.advancing)
+        .toList();
+
+    // Build a map from ID → index in the full enemy list for the merge step.
+    final enemyIndexById = <String, int>{};
+    for (int i = 0; i < enemies.length; i++) {
+      enemyIndexById[enemies[i].id] = i;
+    }
+
     final combatResult = combatEngine.tick(
       deltaTime: dt,
       towers: state.towers,
-      enemies: enemies,
+      enemies: advancingEnemies,
       map: gameMap,
       towerLookup: towerLookup,
       enemyRewards: enemyRewards,
     );
-    enemies = combatResult.updatedEnemies;
+
+    // Merge updated advancing enemies back into the full list.
+    final mergedEnemies = List<EnemyInstance>.from(enemies);
+    for (final updated in combatResult.updatedEnemies) {
+      final idx = enemyIndexById[updated.id];
+      if (idx != null) {
+        mergedEnemies[idx] = updated;
+      }
+    }
+    enemies = mergedEnemies;
+
     lastFireEvents = combatResult.fireEvents;
 
     // Track damaged enemies for flash effect
@@ -244,7 +335,7 @@ class GameController extends ChangeNotifier {
       recentlyDamagedEnemies.add(event.enemyId);
     }
 
-    // 5. Award gold for kills
+    // 10. Award gold for ranged kills
     if (combatResult.goldAwarded > 0) {
       resources.earn(combatResult.goldAwarded);
       state = state.copyWith(gold: resources.gold);
@@ -261,7 +352,7 @@ class GameController extends ChangeNotifier {
       }
     }
 
-    // 6. Check defeat
+    // 11. Check base HP defeat (enemies reached command post)
     if (loopState.isGameOver) {
       state = state.copyWith(phase: GamePhase.defeat);
       _showBanner('DEFEAT');
@@ -269,7 +360,7 @@ class GameController extends ChangeNotifier {
       return;
     }
 
-    // 7. Check wave complete
+    // 12. Check wave complete
     final allSpawned = _waveSpawner?.allSpawned ?? false;
     final waveComplete = GameLoop.isWaveComplete(
       enemies: enemies,
@@ -398,7 +489,7 @@ class GameController extends ChangeNotifier {
     return state.towers.any((t) {
       final pos = gameMap.placements.firstWhere(
         (p) => p.id == positionId,
-        orElse: () => const PlacementPosition(id: '', x: -1, y: -1),
+        orElse: () => const PlacementPosition(id: '', x: -1, y: -1, zone: PlacementZone.behindTrench),
       );
       return (t.x - pos.x).abs() < 1 && (t.y - pos.y).abs() < 1;
     });
@@ -407,7 +498,7 @@ class GameController extends ChangeNotifier {
   PlacedTower? getTowerAtSlot(String positionId) {
     final pos = gameMap.placements.firstWhere(
       (p) => p.id == positionId,
-      orElse: () => const PlacementPosition(id: '', x: -1, y: -1),
+      orElse: () => const PlacementPosition(id: '', x: -1, y: -1, zone: PlacementZone.behindTrench),
     );
     try {
       return state.towers.firstWhere(

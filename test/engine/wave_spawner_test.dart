@@ -169,7 +169,8 @@ void main() {
       expect(enemy.currentHp, testInfantry.hp);
       expect(enemy.speed, testInfantry.speed);
       expect(enemy.armor, testInfantry.armor);
-      expect(enemy.pathProgress, 0.0);
+      expect(enemy.position.dx, 0.0);
+      expect(enemy.position.dy, 0.0);
       expect(enemy.alive, isTrue);
     });
 
