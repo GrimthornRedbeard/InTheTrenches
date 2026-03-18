@@ -1,4 +1,3 @@
-import 'dart:ui' show Offset;
 import 'package:equatable/equatable.dart';
 import 'obstacle.dart';
 import 'trench_segment.dart';

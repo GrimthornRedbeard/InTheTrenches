@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show Offset;
 
 import '../models/enemy_instance.dart';
 import '../models/game_map.dart';
