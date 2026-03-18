@@ -3,47 +3,6 @@ import 'package:trench_defense/config/map_data.dart';
 import 'package:trench_defense/models/models.dart';
 
 void main() {
-  group('PathPoint', () {
-    group('distanceTo', () {
-      test('horizontal distance', () {
-        const a = PathPoint(x: 0, y: 0);
-        const b = PathPoint(x: 3, y: 0);
-        expect(a.distanceTo(b), 3.0);
-      });
-
-      test('vertical distance', () {
-        const a = PathPoint(x: 0, y: 0);
-        const b = PathPoint(x: 0, y: 4);
-        expect(a.distanceTo(b), 4.0);
-      });
-
-      test('diagonal distance (3-4-5 triangle)', () {
-        const a = PathPoint(x: 0, y: 0);
-        const b = PathPoint(x: 3, y: 4);
-        expect(a.distanceTo(b), 5.0);
-      });
-
-      test('same point returns 0', () {
-        const a = PathPoint(x: 5, y: 10);
-        expect(a.distanceTo(a), 0.0);
-      });
-    });
-
-    group('equality', () {
-      test('same coordinates are equal', () {
-        const a = PathPoint(x: 1, y: 2);
-        const b = PathPoint(x: 1, y: 2);
-        expect(a, b);
-      });
-
-      test('different coordinates are not equal', () {
-        const a = PathPoint(x: 1, y: 2);
-        const b = PathPoint(x: 3, y: 4);
-        expect(a, isNot(b));
-      });
-    });
-  });
-
   group('PlacementPosition', () {
     group('equality', () {
       test('same values are equal', () {

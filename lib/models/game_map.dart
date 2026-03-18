@@ -1,26 +1,7 @@
-import 'dart:math' as math;
 import 'dart:ui' show Offset;
 import 'package:equatable/equatable.dart';
 import 'obstacle.dart';
 import 'trench_segment.dart';
-
-/// A point along the enemy path (retained for backward compatibility).
-class PathPoint extends Equatable {
-  final double x;
-  final double y;
-
-  const PathPoint({required this.x, required this.y});
-
-  /// Distance to another point.
-  double distanceTo(PathPoint other) {
-    final dx = x - other.x;
-    final dy = y - other.y;
-    return math.sqrt(dx * dx + dy * dy);
-  }
-
-  @override
-  List<Object?> get props => [x, y];
-}
 
 /// A position where a tower can be placed, tagged with its zone.
 class PlacementPosition extends Equatable {
