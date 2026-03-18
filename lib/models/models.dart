@@ -11,3 +11,4 @@ export 'status_effect.dart';
 export 'tower.dart';
 export 'wave.dart';
 export 'wave_group.dart';
+export 'trench_segment.dart';
