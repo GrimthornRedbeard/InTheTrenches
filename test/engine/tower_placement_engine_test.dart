@@ -78,12 +78,17 @@ void main() {
     id: 'test_map',
     name: 'Test',
     eraId: 'ww1',
-    path: [PathPoint(x: 200, y: 0), PathPoint(x: 300, y: 0)],
+    waveCount: 3,
+    width: 600,
+    height: 800,
+    spawnZoneY: 0,
+    commandPostY: 800,
+    trenchSegments: [],
     placements: [
       PlacementPosition(id: 'pos_0', x: 0, y: 0),
       PlacementPosition(id: 'pos_1', x: 50, y: 0),
     ],
-    waveCount: 3,
+    obstacles: [],
   );
 
   late ResourceManager resources;

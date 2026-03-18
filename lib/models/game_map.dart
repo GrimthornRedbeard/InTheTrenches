@@ -1,8 +1,10 @@
 import 'dart:math' as math;
-
+import 'dart:ui' show Offset;
 import 'package:equatable/equatable.dart';
+import 'obstacle.dart';
+import 'trench_segment.dart';
 
-/// A point along the enemy path.
+/// A point along the enemy path (retained for backward compatibility).
 class PathPoint extends Equatable {
   final double x;
   final double y;
@@ -20,72 +22,99 @@ class PathPoint extends Equatable {
   List<Object?> get props => [x, y];
 }
 
-/// A position where a tower can be placed.
+/// A position where a tower can be placed, tagged with its zone.
 class PlacementPosition extends Equatable {
   final String id;
   final double x;
   final double y;
+  final PlacementZone zone;
 
-  const PlacementPosition({required this.id, required this.x, required this.y});
+  const PlacementPosition({
+    required this.id,
+    required this.x,
+    required this.y,
+    this.zone = PlacementZone.behindTrench,
+  });
 
   @override
-  List<Object?> get props => [id, x, y];
+  List<Object?> get props => [id, x, y, zone];
 }
 
-/// Definition of a game map with enemy path and tower placement spots.
+enum PlacementZone { noMansLand, trench, behindTrench }
+
+/// Zone-based game map with trench segments, obstacles, and placement slots.
 class GameMap extends Equatable {
   final String id;
   final String name;
   final String eraId;
-  final List<PathPoint> path; // ordered waypoints enemies follow
-  final List<PlacementPosition> placements; // where towers can go
-  final int waveCount; // number of waves on this map
+  final int waveCount;
+  final double width;
+  final double height;
+
+  // Vertical zone boundaries
+  final double spawnZoneY;        // enemies spawn at this Y (top)
+  final List<TrenchSegment> trenchSegments;
+  final double commandPostY;      // lose if enemy reaches this Y (bottom)
+
+  // Placement slots and obstacles
+  final List<PlacementPosition> placements;
+  final List<Obstacle> obstacles;
 
   const GameMap({
     required this.id,
     required this.name,
     required this.eraId,
-    required this.path,
-    required this.placements,
     required this.waveCount,
+    required this.width,
+    required this.height,
+    required this.spawnZoneY,
+    required this.trenchSegments,
+    required this.commandPostY,
+    required this.placements,
+    required this.obstacles,
   });
 
-  /// Total path length (sum of distances between consecutive points).
-  double get totalPathLength {
-    double length = 0;
-    for (int i = 1; i < path.length; i++) {
-      length += path[i - 1].distanceTo(path[i]);
-    }
-    return length;
+  int get segmentCount => trenchSegments.length;
+
+  double get segmentWidth => width / segmentCount;
+
+  double get averageTrenchY {
+    if (trenchSegments.isEmpty) return height / 2;
+    return trenchSegments.map((s) => s.worldY).reduce((a, b) => a + b) /
+        segmentCount;
   }
 
-  /// Convert a progress value (0.0-1.0) to a world position on the path.
-  ///
-  /// Progress 0.0 = path start, 1.0 = path end.
-  /// Values outside [0, 1] are clamped.
-  PathPoint positionAtProgress(double progress) {
-    if (path.isEmpty) return const PathPoint(x: 0, y: 0);
-    if (path.length == 1) return path.first;
-    if (progress <= 0) return path.first;
-    if (progress >= 1) return path.last;
-
-    final targetDist = progress * totalPathLength;
-    double accumulated = 0;
-
-    for (int i = 1; i < path.length; i++) {
-      final segmentLength = path[i - 1].distanceTo(path[i]);
-      if (accumulated + segmentLength >= targetDist) {
-        final t = (targetDist - accumulated) / segmentLength;
-        return PathPoint(
-          x: path[i - 1].x + (path[i].x - path[i - 1].x) * t,
-          y: path[i - 1].y + (path[i].y - path[i - 1].y) * t,
-        );
+  int get weakestSegmentIndex {
+    int idx = 0;
+    double min = double.infinity;
+    for (int i = 0; i < trenchSegments.length; i++) {
+      if (trenchSegments[i].breachHp < min) {
+        min = trenchSegments[i].breachHp;
+        idx = i;
       }
-      accumulated += segmentLength;
     }
-    return path.last;
+    return idx;
   }
+
+  /// X spawn position for a given fractional offset (0.0–1.0 across width).
+  double spawnX(double fraction) => fraction * width;
+
+  GameMap copyWith({
+    List<TrenchSegment>? trenchSegments,
+    List<PlacementPosition>? placements,
+    List<Obstacle>? obstacles,
+  }) => GameMap(
+        id: id, name: name, eraId: eraId, waveCount: waveCount,
+        width: width, height: height, spawnZoneY: spawnZoneY,
+        trenchSegments: trenchSegments ?? this.trenchSegments,
+        commandPostY: commandPostY,
+        placements: placements ?? this.placements,
+        obstacles: obstacles ?? this.obstacles,
+      );
 
   @override
-  List<Object?> get props => [id, name, eraId, path, placements, waveCount];
+  List<Object?> get props => [
+        id, name, eraId, waveCount, width, height,
+        spawnZoneY, trenchSegments, commandPostY, placements, obstacles,
+      ];
 }

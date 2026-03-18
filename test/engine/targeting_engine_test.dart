@@ -15,9 +15,14 @@ void main() {
     id: 'test_map',
     name: 'Test Map',
     eraId: 'test',
-    path: [PathPoint(x: 0, y: 0), PathPoint(x: 100, y: 0)],
-    placements: [],
     waveCount: 1,
+    width: 100,
+    height: 100,
+    spawnZoneY: 0,
+    commandPostY: 100,
+    trenchSegments: [],
+    placements: [],
+    obstacles: [],
   );
 
   /// Helper: create an enemy at a world position equivalent to the old

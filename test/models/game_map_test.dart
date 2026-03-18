@@ -67,183 +67,47 @@ void main() {
   });
 
   group('GameMap', () {
-    group('totalPathLength', () {
-      test('sum of segment distances for known path', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [
-            PathPoint(x: 0, y: 0),
-            PathPoint(x: 3, y: 0),
-            PathPoint(x: 3, y: 4),
-          ],
-          placements: [],
-          waveCount: 1,
-        );
-        // 3 + 4 = 7
-        expect(map.totalPathLength, 7.0);
-      });
+    const testMap = GameMap(
+      id: 'test',
+      name: 'Test',
+      eraId: 'test',
+      waveCount: 1,
+      width: 600,
+      height: 800,
+      spawnZoneY: 50,
+      commandPostY: 750,
+      trenchSegments: [
+        TrenchSegment(index: 0, worldX: 100, worldY: 400, breachHp: 100),
+        TrenchSegment(index: 1, worldX: 300, worldY: 400, breachHp: 100),
+        TrenchSegment(index: 2, worldX: 500, worldY: 400, breachHp: 100),
+      ],
+      placements: [],
+      obstacles: [],
+    );
 
-      test('single point path has length 0', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [PathPoint(x: 5, y: 5)],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.totalPathLength, 0.0);
-      });
-
-      test('two points returns distance between them', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [PathPoint(x: 0, y: 0), PathPoint(x: 3, y: 4)],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.totalPathLength, 5.0);
-      });
+    test('segmentCount is correct', () {
+      expect(testMap.segmentCount, 3);
     });
 
-    group('positionAtProgress', () {
-      test('progress 0.0 returns first path point', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [
-            PathPoint(x: 0, y: 0),
-            PathPoint(x: 100, y: 0),
-            PathPoint(x: 100, y: 100),
-          ],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.positionAtProgress(0.0), const PathPoint(x: 0, y: 0));
-      });
+    test('segmentWidth is width / segmentCount', () {
+      expect(testMap.segmentWidth, 200.0); // 600 / 3
+    });
 
-      test('progress 1.0 returns last path point', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [
-            PathPoint(x: 0, y: 0),
-            PathPoint(x: 100, y: 0),
-            PathPoint(x: 100, y: 100),
-          ],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.positionAtProgress(1.0), const PathPoint(x: 100, y: 100));
-      });
+    test('averageTrenchY is correct', () {
+      expect(testMap.averageTrenchY, 400.0);
+    });
 
-      test('progress 0.5 returns midpoint for a 2-point path', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [PathPoint(x: 0, y: 0), PathPoint(x: 100, y: 0)],
-          placements: [],
-          waveCount: 1,
-        );
-        final mid = map.positionAtProgress(0.5);
-        expect(mid.x, closeTo(50, 0.001));
-        expect(mid.y, closeTo(0, 0.001));
-      });
+    test('weakestSegmentIndex returns lowest breachHp index', () {
+      final damaged = testMap.copyWith(trenchSegments: [
+        testMap.trenchSegments[0],
+        testMap.trenchSegments[1].copyWith(breachHp: 10),
+        testMap.trenchSegments[2],
+      ]);
+      expect(damaged.weakestSegmentIndex, 1);
+    });
 
-      test('negative progress is clamped to first point', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [PathPoint(x: 10, y: 20), PathPoint(x: 100, y: 200)],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.positionAtProgress(-0.5), const PathPoint(x: 10, y: 20));
-      });
-
-      test('progress > 1.0 is clamped to last point', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [PathPoint(x: 10, y: 20), PathPoint(x: 100, y: 200)],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.positionAtProgress(1.5), const PathPoint(x: 100, y: 200));
-      });
-
-      test('empty path returns (0, 0)', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.positionAtProgress(0.5), const PathPoint(x: 0, y: 0));
-      });
-
-      test('single point path returns that point', () {
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [PathPoint(x: 42, y: 99)],
-          placements: [],
-          waveCount: 1,
-        );
-        expect(map.positionAtProgress(0.5), const PathPoint(x: 42, y: 99));
-      });
-
-      test('interpolates correctly on multi-segment path', () {
-        // Path: (0,0) -> (100,0) -> (100,100), total length = 200
-        // Progress 0.25 = 50 units along first segment
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [
-            PathPoint(x: 0, y: 0),
-            PathPoint(x: 100, y: 0),
-            PathPoint(x: 100, y: 100),
-          ],
-          placements: [],
-          waveCount: 1,
-        );
-        final pos = map.positionAtProgress(0.25);
-        expect(pos.x, closeTo(50, 0.001));
-        expect(pos.y, closeTo(0, 0.001));
-      });
-
-      test('interpolates into second segment correctly', () {
-        // Path: (0,0) -> (100,0) -> (100,100), total length = 200
-        // Progress 0.75 = 150 units = 100 on first + 50 on second
-        const map = GameMap(
-          id: 'test',
-          name: 'Test',
-          eraId: 'test',
-          path: [
-            PathPoint(x: 0, y: 0),
-            PathPoint(x: 100, y: 0),
-            PathPoint(x: 100, y: 100),
-          ],
-          placements: [],
-          waveCount: 1,
-        );
-        final pos = map.positionAtProgress(0.75);
-        expect(pos.x, closeTo(100, 0.001));
-        expect(pos.y, closeTo(50, 0.001));
-      });
+    test('spawnX scales fraction across width', () {
+      expect(testMap.spawnX(0.5), 300.0);
     });
   });
 
@@ -293,12 +157,12 @@ void main() {
       expect(ids.length, MapData.allMaps.length);
     });
 
-    test('each map has at least 2 path points', () {
+    test('each map has at least 4 trench segments', () {
       for (final map in MapData.allMaps) {
         expect(
-          map.path.length,
-          greaterThanOrEqualTo(2),
-          reason: '${map.id} should have at least 2 path points',
+          map.trenchSegments.length,
+          greaterThanOrEqualTo(4),
+          reason: '${map.id} should have at least 4 trench segments',
         );
       }
     });

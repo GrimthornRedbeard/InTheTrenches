@@ -387,7 +387,7 @@ class GameController extends ChangeNotifier {
     return state.towers.any((t) {
       final pos = gameMap.placements.firstWhere(
         (p) => p.id == positionId,
-        orElse: () => const PlacementPosition(id: '', x: -1, y: -1),
+        orElse: () => const PlacementPosition(id: '', x: -1, y: -1, zone: PlacementZone.behindTrench),
       );
       return (t.x - pos.x).abs() < 1 && (t.y - pos.y).abs() < 1;
     });
@@ -396,7 +396,7 @@ class GameController extends ChangeNotifier {
   PlacedTower? getTowerAtSlot(String positionId) {
     final pos = gameMap.placements.firstWhere(
       (p) => p.id == positionId,
-      orElse: () => const PlacementPosition(id: '', x: -1, y: -1),
+      orElse: () => const PlacementPosition(id: '', x: -1, y: -1, zone: PlacementZone.behindTrench),
     );
     try {
       return state.towers.firstWhere(

@@ -6,17 +6,20 @@ import 'package:trench_defense/models/models.dart';
 
 void main() {
   // ---------------------------------------------------------------------------
-  // Test map — straight horizontal path from (0,0) to (100,0)
-  // totalPathLength = 100.0
-  // positionAtProgress(0.5) = PathPoint(50, 0)
+  // Test map — 100x100 zone-based map (combat engine only uses it as a type)
   // ---------------------------------------------------------------------------
   const testMap = GameMap(
     id: 'test_map',
     name: 'Test Map',
     eraId: 'test',
-    path: [PathPoint(x: 0, y: 0), PathPoint(x: 100, y: 0)],
-    placements: [],
     waveCount: 1,
+    width: 100,
+    height: 100,
+    spawnZoneY: 0,
+    commandPostY: 100,
+    trenchSegments: [],
+    placements: [],
+    obstacles: [],
   );
 
   // ---------------------------------------------------------------------------

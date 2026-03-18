@@ -98,60 +98,51 @@ class _MapPainter extends CustomPainter {
   }
 
   void _drawPath(Canvas canvas) {
-    final path = controller.gameMap.path;
-    if (path.length < 2) return;
+    final gameMap = controller.gameMap;
+    final segments = gameMap.trenchSegments;
 
-    // Draw wide trench background
-    final trenchPaint = Paint()
-      ..color = const Color(0xFF5C4A32)
-      ..strokeWidth = 28
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
+    // Draw trench line connecting all segments
+    if (segments.isNotEmpty) {
+      final trenchPaint = Paint()
+        ..color = const Color(0xFF5C4A32)
+        ..strokeWidth = 28
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
 
-    final trenchPath = Path();
-    trenchPath.moveTo(path[0].x, path[0].y);
-    for (int i = 1; i < path.length; i++) {
-      trenchPath.lineTo(path[i].x, path[i].y);
+      final trenchPath = Path();
+      trenchPath.moveTo(0, segments.first.worldY);
+      trenchPath.lineTo(gameMap.width, segments.first.worldY);
+      canvas.drawPath(trenchPath, trenchPaint);
+
+      // Draw inner dirt strip
+      final pathPaint = Paint()
+        ..color = const Color(0xFF8B7355)
+        ..strokeWidth = 18
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
+      canvas.drawPath(trenchPath, pathPaint);
     }
-    canvas.drawPath(trenchPath, trenchPaint);
 
-    // Draw inner dirt path
-    final pathPaint = Paint()
-      ..color = const Color(0xFF8B7355)
-      ..strokeWidth = 18
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawPath(trenchPath, pathPaint);
-
-    // Draw dotted center line
-    final centerPaint = Paint()
-      ..color = const Color(0xFF6B5A3E)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawPath(trenchPath, centerPaint);
-
-    // Draw spawn and end markers
-    // Spawn (start)
+    // Draw spawn marker
+    final spawnY = gameMap.spawnZoneY;
+    final midX = gameMap.width / 2;
     canvas.drawCircle(
-      Offset(path.first.x, path.first.y),
+      Offset(midX, spawnY),
       14,
       Paint()..color = const Color(0xFF8B2020),
     );
-    _drawText(canvas, 'SPAWN', path.first.x, path.first.y - 22, 10,
-        const Color(0xFFD44040));
+    _drawText(canvas, 'SPAWN', midX, spawnY - 22, 10, const Color(0xFFD44040));
 
-    // Base (end)
+    // Draw base marker
+    final baseY = gameMap.commandPostY;
     canvas.drawCircle(
-      Offset(path.last.x, path.last.y),
+      Offset(midX, baseY),
       14,
       Paint()..color = const Color(0xFF4A7C3F),
     );
-    _drawText(canvas, 'BASE', path.last.x, path.last.y - 22, 10,
-        const Color(0xFF6B9B5E));
+    _drawText(canvas, 'BASE', midX, baseY - 22, 10, const Color(0xFF6B9B5E));
   }
 
   void _drawPlacementSlots(Canvas canvas) {
