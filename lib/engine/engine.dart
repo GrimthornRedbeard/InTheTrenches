@@ -9,3 +9,5 @@ export 'targeting_engine.dart';
 export 'tower_placement_engine.dart';
 export 'steering_engine.dart';
 export 'wave_spawner.dart';
+export 'breach_engine.dart';
+export 'trench_engine.dart';
