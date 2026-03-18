@@ -7,7 +7,8 @@ import '../../providers/game_providers.dart';
 
 /// The core map rendering widget using CustomPainter.
 ///
-/// Renders the path, placement slots, towers, and enemies on a canvas.
+/// Renders three tinted zone bands (no man's land, trench, behind trench),
+/// the segmented trench line, placement slots, towers, and enemies on a canvas.
 /// Wrapped in an InteractiveViewer for zoom/pan support.
 class GameMapWidget extends StatelessWidget {
   final GameController controller;
@@ -88,61 +89,106 @@ class _MapPainter extends CustomPainter {
     canvas.save();
     canvas.scale(scale);
 
-    _drawPath(canvas);
+    // Map size in world coordinates
+    final mapSize = Size(controller.gameMap.width, controller.gameMap.height);
+
+    // Draw in back-to-front order so enemies appear above zone tints
+    _drawZones(canvas, mapSize);
+    _drawTrench(canvas);
+    _drawObstacles(canvas);
     _drawPlacementSlots(canvas);
     _drawTowers(canvas);
     _drawEnemies(canvas);
     _drawFireEvents(canvas);
 
+    // Spawn and command post markers drawn last (on top of everything)
+    _drawMarkers(canvas, mapSize);
+
     canvas.restore();
   }
 
-  void _drawPath(Canvas canvas) {
-    final gameMap = controller.gameMap;
-    final segments = gameMap.trenchSegments;
+  /// Draws tinted colour bands for the three map zones:
+  /// - No man's land (top, above trench)
+  /// - Trench area (thin band around the trench line)
+  /// - Behind trench (below trench to command post)
+  void _drawZones(Canvas canvas, Size size) {
+    final trenchY = controller.trenchSegments.isEmpty
+        ? size.height / 2
+        : controller.trenchSegments
+                .map((s) => s.worldY)
+                .reduce((a, b) => a + b) /
+            controller.trenchSegments.length;
 
-    // Draw trench line connecting all segments
-    if (segments.isNotEmpty) {
-      final trenchPaint = Paint()
-        ..color = const Color(0xFF5C4A32)
-        ..strokeWidth = 28
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..style = PaintingStyle.stroke;
+    // No man's land — top of map to trench line
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width, trenchY),
+      Paint()..color = const Color(0xFF3D4A1E).withValues(alpha: 0.4),
+    );
 
-      final trenchPath = Path();
-      trenchPath.moveTo(0, segments.first.worldY);
-      trenchPath.lineTo(gameMap.width, segments.first.worldY);
-      canvas.drawPath(trenchPath, trenchPaint);
+    // Behind trench — trench line to bottom of map
+    canvas.drawRect(
+      Rect.fromLTWH(0, trenchY, size.width, size.height - trenchY),
+      Paint()..color = const Color(0xFF2A3010).withValues(alpha: 0.5),
+    );
+  }
 
-      // Draw inner dirt strip
-      final pathPaint = Paint()
-        ..color = const Color(0xFF8B7355)
-        ..strokeWidth = 18
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round
-        ..style = PaintingStyle.stroke;
-      canvas.drawPath(trenchPath, pathPaint);
+  /// Draws each trench segment as a coloured rectangle, with a breach HP bar.
+  void _drawTrench(Canvas canvas) {
+    final segW = controller.gameMap.segmentWidth;
+
+    for (final seg in controller.trenchSegments) {
+      final color = switch (seg.state) {
+        TrenchSegmentState.held => const Color(0xFF5C4A32),
+        TrenchSegmentState.contested => const Color(0xFFAA5500),
+        TrenchSegmentState.breached => const Color(0xFFCC2200),
+        TrenchSegmentState.collapsed => const Color(0xFF880000),
+      };
+
+      final rect = Rect.fromCenter(
+        center: Offset(seg.worldX, seg.worldY),
+        width: segW - 4,
+        height: 28,
+      );
+      canvas.drawRect(rect, Paint()..color = color);
+
+      // Breach HP bar (not shown for fully collapsed segments)
+      if (seg.state != TrenchSegmentState.collapsed) {
+        final barW = (segW - 8) * (seg.breachHp / 100).clamp(0.0, 1.0);
+
+        // Bar background
+        canvas.drawRect(
+          Rect.fromLTWH(
+            seg.worldX - segW / 2 + 4,
+            seg.worldY + 16,
+            segW - 8,
+            4,
+          ),
+          Paint()..color = const Color(0xFF333333),
+        );
+
+        // Bar fill
+        canvas.drawRect(
+          Rect.fromLTWH(
+            seg.worldX - segW / 2 + 4,
+            seg.worldY + 16,
+            barW,
+            4,
+          ),
+          Paint()..color = const Color(0xFF00FF88),
+        );
+      }
     }
+  }
 
-    // Draw spawn marker
-    final spawnY = gameMap.spawnZoneY;
-    final midX = gameMap.width / 2;
-    canvas.drawCircle(
-      Offset(midX, spawnY),
-      14,
-      Paint()..color = const Color(0xFF8B2020),
-    );
-    _drawText(canvas, 'SPAWN', midX, spawnY - 22, 10, const Color(0xFFD44040));
-
-    // Draw base marker
-    final baseY = gameMap.commandPostY;
-    canvas.drawCircle(
-      Offset(midX, baseY),
-      14,
-      Paint()..color = const Color(0xFF4A7C3F),
-    );
-    _drawText(canvas, 'BASE', midX, baseY - 22, 10, const Color(0xFF6B9B5E));
+  /// Draws environmental obstacles (barbed wire and shell craters).
+  void _drawObstacles(Canvas canvas) {
+    for (final obs in controller.gameMap.obstacles) {
+      final paint = Paint()
+        ..color = obs.type == ObstacleType.barbedWire
+            ? const Color(0xFF888866)
+            : const Color(0xFF554433);
+      canvas.drawCircle(obs.position, obs.radius, paint);
+    }
   }
 
   void _drawPlacementSlots(Canvas canvas) {
@@ -151,31 +197,45 @@ class _MapPainter extends CustomPainter {
       final isSelected = slot.id == selectedSlotId;
 
       if (!isOccupied) {
-        // Draw empty slot
-        final slotPaint = Paint()
-          ..color = isSelected
+        // Zone-tinted fill colour
+        final fillColor = switch (slot.zone) {
+          PlacementZone.noMansLand => isSelected
+              ? const Color(0xFF9B7E3E)
+              : const Color(0xFF6B5523),
+          PlacementZone.trench => isSelected
+              ? const Color(0xFF8B7E5E)
+              : const Color(0xFF5A4A33),
+          PlacementZone.behindTrench => isSelected
               ? const Color(0xFF6B9B5E)
-              : const Color(0xFF4A5D23)
-          ..style = PaintingStyle.fill;
+              : const Color(0xFF4A5D23),
+        };
 
+        final borderColor = switch (slot.zone) {
+          PlacementZone.noMansLand => isSelected
+              ? const Color(0xFFCBA85E)
+              : const Color(0xFF8B7040),
+          PlacementZone.trench => isSelected
+              ? const Color(0xFFBBAA8E)
+              : const Color(0xFF7A6A53),
+          PlacementZone.behindTrench => isSelected
+              ? const Color(0xFF8BC87E)
+              : const Color(0xFF6B8040),
+        };
+
+        // Draw empty slot
         canvas.drawCircle(
           Offset(slot.x, slot.y),
           18,
-          slotPaint,
+          Paint()..color = fillColor,
         );
 
-        // Dashed border
-        final borderPaint = Paint()
-          ..color = isSelected
-              ? const Color(0xFF8BC87E)
-              : const Color(0xFF6B8040)
-          ..strokeWidth = 2
-          ..style = PaintingStyle.stroke;
-
         canvas.drawCircle(
           Offset(slot.x, slot.y),
           18,
-          borderPaint,
+          Paint()
+            ..color = borderColor
+            ..strokeWidth = 2
+            ..style = PaintingStyle.stroke,
         );
 
         // Plus sign
@@ -304,30 +364,32 @@ class _MapPainter extends CustomPainter {
     }
   }
 
+  /// Draws enemies as free-positioned circles, coloured by movement state.
   void _drawEnemies(Canvas canvas) {
     for (final enemy in controller.enemies) {
       if (!enemy.alive) continue;
 
-      // Use the enemy's 2D position directly (replaces positionAtProgress).
-      final x = enemy.position.dx;
-      final y = enemy.position.dy;
+      final pos = enemy.position;
+      final isDamaged = controller.recentlyDamagedEnemies.contains(enemy.id);
 
-      // Color by enemy type
-      final color = _getEnemyColor(enemy.definitionId);
-      final isDamaged =
-          controller.recentlyDamagedEnemies.contains(enemy.id);
+      // Colour encodes current movement phase
+      final baseColor = switch (enemy.movementState) {
+        EnemyMovementState.advancing => const Color(0xFFCC3333),
+        EnemyMovementState.breaching => const Color(0xFFFF6600),
+        EnemyMovementState.inTrench => const Color(0xFFFF0000),
+        EnemyMovementState.crossed => const Color(0xFF990000),
+      };
+
+      final bodyColor = isDamaged
+          ? Color.lerp(baseColor, Colors.red, 0.6)!
+          : baseColor;
 
       // Enemy body
-      final bodyPaint = Paint()
-        ..color = isDamaged
-            ? Color.lerp(color, Colors.red, 0.6)!
-            : color;
-
-      canvas.drawCircle(Offset(x, y), 8, bodyPaint);
+      canvas.drawCircle(pos, 8, Paint()..color = bodyColor);
 
       // Border
       canvas.drawCircle(
-        Offset(x, y),
+        pos,
         8,
         Paint()
           ..color = Colors.white.withValues(alpha: 0.4)
@@ -340,10 +402,10 @@ class _MapPainter extends CustomPainter {
       if (def != null) {
         final maxHp = def.hp;
         final hpRatio = (enemy.currentHp / maxHp).clamp(0.0, 1.0);
-        final barWidth = 16.0;
-        final barHeight = 3.0;
-        final barX = x - barWidth / 2;
-        final barY = y - 14;
+        const barWidth = 16.0;
+        const barHeight = 3.0;
+        final barX = pos.dx - barWidth / 2;
+        final barY = pos.dy - 14;
 
         // Background
         canvas.drawRect(
@@ -386,7 +448,7 @@ class _MapPainter extends CustomPainter {
         continue;
       }
 
-      // Use the enemy's 2D position directly (replaces positionAtProgress).
+      // Use the enemy's 2D position directly
       final enemyPos = enemy.position;
 
       // Draw fire line
@@ -402,27 +464,40 @@ class _MapPainter extends CustomPainter {
     }
   }
 
-  Color _getEnemyColor(String definitionId) {
-    switch (definitionId) {
-      case 'wwi_infantry':
-        return const Color(0xFF4CAF50); // green
-      case 'wwi_runner':
-        return const Color(0xFFFFEB3B); // yellow
-      case 'wwi_shield_bearer':
-        return const Color(0xFF607D8B); // blue-grey
-      case 'wwi_officer':
-        return const Color(0xFF9C27B0); // purple
-      case 'wwi_medic':
-        return const Color(0xFFFFFFFF); // white
-      case 'wwi_sapper':
-        return const Color(0xFFFF9800); // orange
-      case 'wwi_heavy':
-        return const Color(0xFFF44336); // red
-      case 'wwi_elite':
-        return const Color(0xFFFFD700); // gold
-      default:
-        return const Color(0xFF4CAF50);
-    }
+  /// Draws spawn and command post markers.
+  void _drawMarkers(Canvas canvas, Size mapSize) {
+    final gameMap = controller.gameMap;
+    final midX = gameMap.width / 2;
+
+    // Spawn marker (top)
+    canvas.drawCircle(
+      Offset(midX, gameMap.spawnZoneY),
+      14,
+      Paint()..color = const Color(0xFF8B2020),
+    );
+    _drawText(
+      canvas,
+      'SPAWN',
+      midX,
+      gameMap.spawnZoneY - 22,
+      10,
+      const Color(0xFFD44040),
+    );
+
+    // Base / command post marker (bottom)
+    canvas.drawCircle(
+      Offset(midX, gameMap.commandPostY),
+      14,
+      Paint()..color = const Color(0xFF4A7C3F),
+    );
+    _drawText(
+      canvas,
+      'BASE',
+      midX,
+      gameMap.commandPostY - 22,
+      10,
+      const Color(0xFF6B9B5E),
+    );
   }
 
   void _drawText(Canvas canvas, String text, double x, double y,
